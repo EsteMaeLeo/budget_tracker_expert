@@ -4,10 +4,20 @@ const CACHE_NAME = APP_PREFIX + VERSION;
 
 //files to cache
 const FILES_TO_CACHE = [
-  "/index.html",
-  "/css/styles.css",
-  "/js/index.js",
-  "/js/idb.js",
+  ".",
+  "./index.html",
+  "./css/styles.css",
+  "./js/index.js",
+  "./js/idb.js",
+  "./manifest.json",
+  "./icons/icon-512x512.png",
+  "./icons/icon-384x384.png",
+  "./icons/icon-192x192.png",
+  "./icons/icon-152x152.png",
+  "./icons/icon-144x144.png",
+  "./icons/icon-128x128.png",
+  "./icons/icon-96x96.png",
+  "./icons/icon-72x72.png",
 ];
 
 self.addEventListener("install", function (e) {
@@ -40,6 +50,28 @@ self.addEventListener("activate", function (e) {
 });
 
 self.addEventListener("fetch", function (e) {
+  if (
+    e.request.method !== `GET` ||
+    !e.request.url.startsWith(self.location.origin)
+  ) {
+    e.respondWith(fetch(e.request));
+    return;
+  }
+
+  if (e.request.url.includes(`/api/transaction`)) {
+    e.respondWith(
+      caches.open(CACHE_NAME).then(cache =>
+        fetch(e.request)
+          .then(response => {
+            cache.put(e.request, response.clone());
+            return response;
+          })
+          .catch(() => caches.match(e.request))
+      )
+    );
+    return;
+  }
+
   console.log("fetch request : " + e.request.url);
   e.respondWith(
     caches.match(e.request).then(function (request) {
